@@ -56,6 +56,35 @@ select {
   border-radius: 4px;
 }
 
+.input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.input-row input[type="text"] {
+  margin-top: 0;
+  flex: 1;
+}
+
+.input-row input[type="file"] {
+  flex: 1;
+}
+
+.browse-button {
+  padding: 8px 12px;
+  border: 1px solid #2c7be5;
+  background: #f0f6ff;
+  color: #2c7be5;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.browse-button:hover {
+  background: #dce9ff;
+}
+
 .button-row {
   display: flex;
   gap: 8px;
