@@ -56,24 +56,43 @@ def _compute_norm(alpha: np.ndarray) -> float:
     return float(np.sqrt(np.sum(alpha.astype(np.float64) ** 2)))
 
 
+def _to_straight_alpha(premultiplied: np.ndarray) -> np.ndarray:
+    """Convert premultiplied RGBA to straight-alpha RGBA."""
+
+    alpha = np.clip(premultiplied[..., 3:4], 0.0, 1.0)
+    safe_alpha = np.where(alpha <= 1e-6, 1.0, alpha)
+    rgb = premultiplied[..., :3] / safe_alpha
+    return np.concatenate([rgb, alpha], axis=-1)
+
+
+def _to_premultiplied(straight: np.ndarray) -> np.ndarray:
+    """Convert straight-alpha RGBA to premultiplied RGBA."""
+
+    premultiplied = straight.copy()
+    premultiplied[..., :3] *= premultiplied[..., 3:4]
+    return premultiplied
+
+
 def _resize_linear(image: np.ndarray, scale: float) -> np.ndarray:
-    """Resize a linear-space RGBA image using PIL."""
+    """Resize a linear-space premultiplied RGBA image using PIL."""
 
     height, width = image.shape[:2]
     new_size = (max(1, int(width * scale)), max(1, int(height * scale)))
-    pil_image = Image.fromarray((np.clip(image, 0.0, 1.0) * 255.0).astype(np.uint8), mode="RGBA")
+    straight = _to_straight_alpha(image)
+    pil_image = Image.fromarray((np.clip(straight, 0.0, 1.0) * 255.0).astype(np.uint8), mode="RGBA")
     resized = pil_image.resize(new_size, resample=Image.BILINEAR)
     data = np.asarray(resized).astype(np.float32) / 255.0
-    return data
+    return _to_premultiplied(data)
 
 
 def _rotate_image(premultiplied: np.ndarray, angle_deg: float) -> np.ndarray:
     """Rotate premultiplied RGBA using PIL with expansion."""
 
-    pil_image = Image.fromarray((np.clip(premultiplied, 0.0, 1.0) * 255.0).astype(np.uint8), mode="RGBA")
+    straight = _to_straight_alpha(premultiplied)
+    pil_image = Image.fromarray((np.clip(straight, 0.0, 1.0) * 255.0).astype(np.uint8), mode="RGBA")
     rotated = pil_image.rotate(angle_deg, resample=Image.BILINEAR, expand=True)
     data = np.asarray(rotated).astype(np.float32) / 255.0
-    return data
+    return _to_premultiplied(data)
 
 
 def _validate_premultiplied(premultiplied: np.ndarray, alpha: np.ndarray) -> None:
