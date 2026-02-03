@@ -87,10 +87,10 @@ def run_optimization(
 
     canvas = np.zeros_like(pyramid[0])
     residual = recompute_residual(pyramid[0], canvas)
-    last_gain = None
     boxes: List[tuple[int, int, int, int]] = []
 
     for level_index, level_target in enumerate(pyramid):
+        last_gain = None
         with Timer() as level_timer:
             if level_index > 0:
                 canvas = _upsample_canvas(canvas, level_target.shape)
