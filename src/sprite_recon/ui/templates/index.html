@@ -34,6 +34,9 @@
               <button class="browse-button" type="button" id="outputPicker">Browse</button>
             </div>
           </label>
+          <p class="helper-text">
+            If your browser hides full paths, pick a file/folder and then paste the full path manually.
+          </p>
 
           <h3>Controls</h3>
           <label>Quality Preset
@@ -110,7 +113,7 @@
 
     function pickPathFromFile(file) {
       if (!file) return '';
-      return file.path || file.webkitRelativePath || file.name || '';
+      return file.path || file.webkitRelativePath || '';
     }
 
     targetPicker.addEventListener('change', (event) => {
@@ -125,7 +128,8 @@
       const file = event.target.files && event.target.files[0];
       const picked = pickPathFromFile(file);
       if (picked) {
-        spritesPath.value = picked.split('/')[0] || picked.split('\\')[0] || picked;
+        const normalized = picked.replace(/\\/g, '/');
+        spritesPath.value = normalized.split('/')[0] || picked;
       }
     });
 
