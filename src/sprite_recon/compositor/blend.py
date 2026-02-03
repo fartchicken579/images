@@ -172,16 +172,27 @@ def composite_sprite(
         hsv_adjust=hsv_adjust,
     )
 
-    if x0 < 0 or y0 < 0 or x1 > canvas.shape[1] or y1 > canvas.shape[0]:
-        raise ValueError("Sprite placement is out of canvas bounds.")
+    canvas_height, canvas_width = canvas.shape[:2]
+    ox0 = max(0, x0)
+    oy0 = max(0, y0)
+    ox1 = min(canvas_width, x1)
+    oy1 = min(canvas_height, y1)
+    if ox0 >= ox1 or oy0 >= oy1:
+        return canvas, (0, 0, 0, 0)
 
     sprite_rgba = base_template.copy()
     sprite_rgba[..., :3] *= opacity
     sprite_rgba[..., 3] *= opacity
 
-    canvas_patch = canvas[y0:y1, x0:x1]
-    src_rgb = sprite_rgba[..., :3]
-    src_a = sprite_rgba[..., 3:4]
+    sprite_x0 = ox0 - x0
+    sprite_y0 = oy0 - y0
+    sprite_x1 = sprite_x0 + (ox1 - ox0)
+    sprite_y1 = sprite_y0 + (oy1 - oy0)
+
+    canvas_patch = canvas[oy0:oy1, ox0:ox1]
+    sprite_patch = sprite_rgba[sprite_y0:sprite_y1, sprite_x0:sprite_x1]
+    src_rgb = sprite_patch[..., :3]
+    src_a = sprite_patch[..., 3:4]
     dst_rgb = canvas_patch[..., :3]
     dst_a = canvas_patch[..., 3:4]
 
@@ -189,6 +200,6 @@ def composite_sprite(
     out_a = src_a + dst_a * (1.0 - src_a)
     canvas_patch[..., :3] = out_rgb
     canvas_patch[..., 3:4] = out_a
-    canvas[y0:y1, x0:x1] = canvas_patch
+    canvas[oy0:oy1, ox0:ox1] = canvas_patch
 
-    return canvas, (x0, y0, x1, y1)
+    return canvas, (ox0, oy0, ox1, oy1)

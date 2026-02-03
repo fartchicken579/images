@@ -17,14 +17,26 @@
         <h2>Inputs</h2>
         <form method="post" action="/start">
           <label>Target Image Path
-            <input type="text" name="target" placeholder="/path/to/target.png" required>
+            <div class="input-row">
+              <input id="targetPath" type="text" name="target" placeholder="/path/to/target.png" required>
+              <input id="targetPicker" type="file" accept="image/*">
+            </div>
           </label>
           <label>Sprite Folder Path
-            <input type="text" name="sprites" placeholder="/path/to/sprites" required>
+            <div class="input-row">
+              <input id="spritesPath" type="text" name="sprites" placeholder="/path/to/sprites" required>
+              <input id="spritesPicker" type="file" webkitdirectory directory multiple>
+            </div>
           </label>
           <label>Output Directory
-            <input type="text" name="output" placeholder="/path/to/output" required>
+            <div class="input-row">
+              <input id="outputPath" type="text" name="output" placeholder="/path/to/output" required>
+              <button class="browse-button" type="button" id="outputPicker">Browse</button>
+            </div>
           </label>
+          <p class="helper-text">
+            If your browser hides full paths, pick a file/folder and then paste the full path manually.
+          </p>
 
           <h3>Controls</h3>
           <label>Quality Preset
@@ -92,6 +104,49 @@
     const logEl = document.getElementById('log');
     const previewImg = document.getElementById('preview');
     const autoRefresh = document.getElementById('autoRefresh');
+    const targetPicker = document.getElementById('targetPicker');
+    const spritesPicker = document.getElementById('spritesPicker');
+    const outputPicker = document.getElementById('outputPicker');
+    const targetPath = document.getElementById('targetPath');
+    const spritesPath = document.getElementById('spritesPath');
+    const outputPath = document.getElementById('outputPath');
+
+    function pickPathFromFile(file) {
+      if (!file) return '';
+      return file.path || file.webkitRelativePath || '';
+    }
+
+    targetPicker.addEventListener('change', (event) => {
+      const file = event.target.files && event.target.files[0];
+      const picked = pickPathFromFile(file);
+      if (picked) {
+        targetPath.value = picked;
+      }
+    });
+
+    spritesPicker.addEventListener('change', (event) => {
+      const file = event.target.files && event.target.files[0];
+      const picked = pickPathFromFile(file);
+      if (picked) {
+        const normalized = picked.replace(/\\/g, '/');
+        spritesPath.value = normalized.split('/')[0] || picked;
+      }
+    });
+
+    outputPicker.addEventListener('click', async () => {
+      if (!window.showDirectoryPicker) {
+        outputPath.focus();
+        return;
+      }
+      try {
+        const handle = await window.showDirectoryPicker();
+        if (handle && handle.name) {
+          outputPath.value = handle.name;
+        }
+      } catch (err) {
+        // User canceled selection or browser blocked access.
+      }
+    });
 
     function refreshStatus() {
       fetch('/status')
