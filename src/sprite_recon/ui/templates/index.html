@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sprite Reconstruction UI</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Sprite Reconstruction</h1>
+      <p class="status" id="status">Idle</p>
+    </header>
+
+    <div class="layout">
+      <section class="panel inputs">
+        <h2>Inputs</h2>
+        <form method="post" action="/start">
+          <label>Target Image Path
+            <input type="text" name="target" placeholder="/path/to/target.png" required>
+          </label>
+          <label>Sprite Folder Path
+            <input type="text" name="sprites" placeholder="/path/to/sprites" required>
+          </label>
+          <label>Output Directory
+            <input type="text" name="output" placeholder="/path/to/output" required>
+          </label>
+
+          <h3>Controls</h3>
+          <label>Quality Preset
+            <select name="preset">
+              <option value="fast">Fast</option>
+              <option value="balanced" selected>Balanced</option>
+              <option value="high_quality">High</option>
+              <option value="high_quality">Max</option>
+            </select>
+          </label>
+          <label>Sprite Budget
+            <input type="number" name="max_sprites" value="500" min="1" step="1">
+          </label>
+
+          <div class="button-row">
+            <button type="submit">Start</button>
+          </div>
+        </form>
+
+        <div class="button-row">
+          <form method="post" action="/pause">
+            <button type="submit">Pause</button>
+          </form>
+          <form method="post" action="/resume">
+            <button type="submit">Resume</button>
+          </form>
+          <form method="post" action="/stop">
+            <button type="submit">Stop</button>
+          </form>
+        </div>
+      </section>
+
+      <section class="panel preview">
+        <h2>Preview</h2>
+        <div class="preview-box">
+          <img id="preview" src="" alt="Preview" />
+        </div>
+        <div class="toggle-row">
+          <label>
+            <input type="checkbox" id="autoRefresh" checked>
+            Auto-refresh preview
+          </label>
+        </div>
+      </section>
+
+      <section class="panel diagnostics">
+        <h2>Progress & Diagnostics</h2>
+        <ul class="metrics">
+          <li>Level: <span id="level">0</span></li>
+          <li>Sprites Placed: <span id="sprites">0</span></li>
+          <li>Residual Energy: <span id="residual">0.0</span></li>
+          <li>Iteration Time (ms): <span id="iterationMs">0.0</span></li>
+        </ul>
+        <div class="log" id="log"></div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const statusEl = document.getElementById('status');
+    const levelEl = document.getElementById('level');
+    const spritesEl = document.getElementById('sprites');
+    const residualEl = document.getElementById('residual');
+    const iterationMsEl = document.getElementById('iterationMs');
+    const logEl = document.getElementById('log');
+    const previewImg = document.getElementById('preview');
+    const autoRefresh = document.getElementById('autoRefresh');
+
+    function refreshStatus() {
+      fetch('/status')
+        .then(res => res.json())
+        .then(data => {
+          statusEl.textContent = data.message || 'Idle';
+          levelEl.textContent = data.level;
+          spritesEl.textContent = data.sprites;
+          residualEl.textContent = data.residual.toFixed(6);
+          iterationMsEl.textContent = data.iteration_ms.toFixed(2);
+          logEl.textContent = (data.log || []).slice(-15).join('\n');
+        })
+        .catch(() => {});
+    }
+
+    function refreshPreview() {
+      if (!autoRefresh.checked) return;
+      previewImg.src = `/preview?ts=${Date.now()}`;
+    }
+
+    setInterval(refreshStatus, 1000);
+    setInterval(refreshPreview, 2000);
+  </script>
+</body>
+</html>
